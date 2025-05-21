@@ -1,5 +1,10 @@
-use crate::{build, models::{self, BuildState}, util::generate_token};
-use actix_web::{HttpResponse, Responder, post, rt::task::JoinHandle, web};
+use crate::{
+    auth::is_authorised_client,
+    build,
+    models::{self, BuildState},
+    util::generate_token,
+};
+use actix_web::{HttpRequest, HttpResponse, Responder, post, rt::task::JoinHandle, web};
 use build::build;
 use models::{SharedState, UpdateMessage};
 use std::sync::Arc;
@@ -13,19 +18,23 @@ use std::sync::Arc;
 
 #[post("/build")]
 pub async fn build_initialize(
+    req: HttpRequest,
     _package_name: String,
     state: web::Data<SharedState>,
 ) -> impl Responder {
+    if !is_authorised_client(&req) {
+        return HttpResponse::Unauthorized().body("Unauthorized");
+    }
+
     let process_state = state.get_ref().clone();
 
     let mut flag = state.is_building.lock().await;
     if *flag {
-        
-        let  token = state.token.lock().await;
+        let token = state.token.lock().await;
 
         let payload = BuildState {
-            token: Some( "/connect?token=".to_string()+ &token.clone().unwrap()),
-            is_running:true
+            token: Some("/connect?token=".to_string() + &token.clone().unwrap()),
+            is_running: true,
         };
 
         let json_str = serde_json::to_string(&payload).unwrap();
@@ -47,13 +56,11 @@ pub async fn build_initialize(
     *token = Some(new_token.clone());
 
     let payload = BuildState {
-        token: Some("/connect?token=".to_string()+ &new_token.clone()),
-        is_running:true
+        token: Some("/connect?token=".to_string() + &new_token.clone()),
+        is_running: true,
     };
 
     let json_str = serde_json::to_string(&payload).unwrap();
 
-
     HttpResponse::Ok().body(json_str)
-
 }

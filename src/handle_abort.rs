@@ -1,9 +1,7 @@
-
-use actix_web::{post, web, HttpResponse, Responder};
+use actix_web::{HttpRequest, HttpResponse, Responder, post, web};
 use models::{SharedState, UpdateMessage};
 
-use crate::{ models};
-
+use crate::{auth::is_authorised_client, models};
 
 /*
 |--------------------------------------------------------------------------
@@ -12,7 +10,11 @@ use crate::{ models};
 |
 */
 #[post("/abort")]
-pub async fn abort(state: web::Data<SharedState>) -> impl Responder {
+pub async fn abort(req: HttpRequest, state: web::Data<SharedState>) -> impl Responder {
+    if !is_authorised_client(&req) {
+        return HttpResponse::Unauthorized().body("Unauthorized");
+    }
+
     let mut flag = state.is_building.lock().await;
     if *flag {
         let process_state = state.get_ref().clone();
@@ -25,18 +27,17 @@ pub async fn abort(state: web::Data<SharedState>) -> impl Responder {
                 step: "0".to_string(),
                 status: "aborted".to_string(),
                 output: "Done Aborting".to_string(),
-            };  
+            };
             let json_str = serde_json::to_string(&msg).unwrap();
             return HttpResponse::Ok().body(json_str);
-
         }
-            }//if running
-        let msg = UpdateMessage {
-                step: "0".to_string(),
-                status: "Build is not running already".to_string(),
-                output: "It been sleeping".to_string(),
-            };  
-            let json_str = serde_json::to_string(&msg).unwrap();
-            return HttpResponse::Ok().body(json_str);
-
+    } //if running
+    let msg = UpdateMessage {
+        step: "0".to_string(),
+        status: "Build is not running already".to_string(),
+        output: "It been sleeping".to_string(),
+    };
+    let json_str = serde_json::to_string(&msg).unwrap();
+    return HttpResponse::Ok().body(json_str);
 }
+

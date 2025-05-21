@@ -1,10 +1,11 @@
-
 use models::{SharedState, UpdateMessage};
 
-use actix_web::{get, web, HttpResponse, Responder};
+use actix_web::{HttpRequest, HttpResponse, Responder, get, web};
 
-use crate::models::{self, BuildState};
-
+use crate::{
+    auth::is_authorised_client,
+    models::{self, BuildState},
+};
 
 /*
 |--------------------------------------------------------------------------
@@ -13,30 +14,32 @@ use crate::models::{self, BuildState};
 |
 */
 #[get("/is_building")]
-pub async fn is_building(state: web::Data<SharedState>) -> impl Responder {
-    let  flag = state.is_building.lock().await;
-        
-        if *flag {
-            let token = state.token.lock().await;
+pub async fn is_building(req: HttpRequest, state: web::Data<SharedState>) -> impl Responder {
+    if !is_authorised_client(&req) {
+        return HttpResponse::Unauthorized().body("Unauthorized");
+    }
 
-             let payload = BuildState {
-                    token: Some( "/connect?token=".to_string()+ &token.clone().unwrap() ),
-                    is_running:true
-                };
+    let flag = state.is_building.lock().await;
 
-            let json_str = serde_json::to_string(&payload).unwrap();
-           
-            return HttpResponse::Ok().body(json_str);
-        }
-        else {
-             let payload = BuildState {
-                    token: None,
-                    is_running:false
-                };
+    if *flag {
+        let token = state.token.lock().await;
 
-            let json_str = serde_json::to_string(&payload).unwrap();
-           
-            return HttpResponse::Ok().body(json_str);
-        }
+        let payload = BuildState {
+            token: Some("/connect?token=".to_string() + &token.clone().unwrap()),
+            is_running: true,
+        };
+
+        let json_str = serde_json::to_string(&payload).unwrap();
+
+        return HttpResponse::Ok().body(json_str);
+    } else {
+        let payload = BuildState {
+            token: None,
+            is_running: false,
+        };
+
+        let json_str = serde_json::to_string(&payload).unwrap();
+
+        return HttpResponse::Ok().body(json_str);
+    }
 }
-

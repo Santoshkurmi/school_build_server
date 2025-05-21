@@ -1,0 +1,12 @@
+[
+    {
+        "command":"ls",
+        "title":"List All Folder",
+        "icon":"icon1"
+    },
+    {
+        "command":"man",
+        "title":"Man Page",
+        "icon":"icon2"
+    }
+]
