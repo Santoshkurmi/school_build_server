@@ -25,7 +25,7 @@ pub async fn is_building(req: HttpRequest, state: web::Data<SharedState>) -> imp
         let token = state.token.lock().await;
 
         let payload = BuildState {
-            token: Some("/connect?token=".to_string() + &token.clone().unwrap()),
+            token: Some(token.clone().unwrap().to_string()),
             is_running: true,
         };
 

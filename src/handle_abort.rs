@@ -1,7 +1,7 @@
 use actix_web::{HttpRequest, HttpResponse, Responder, post, web};
 use models::{SharedState, UpdateMessage};
 
-use crate::{auth::is_authorised_client, models};
+use crate::{auth::is_authorised_client, handle_error_success::handle_error_success, models};
 
 /*
 |--------------------------------------------------------------------------
@@ -15,22 +15,18 @@ pub async fn abort(req: HttpRequest, state: web::Data<SharedState>) -> impl Resp
         return HttpResponse::Unauthorized().body("Unauthorized");
     }
 
-    let mut flag = state.is_building.lock().await;
+    let   flag = state.is_building.lock().await;
     if *flag {
-        let process_state = state.get_ref().clone();
-        let mut handle = process_state.builder_handle.lock().await;
-        if let Some(handle) = handle.take() {
-            handle.abort();
-            *flag = false;
-
-            let msg = UpdateMessage {
+        
+        let msg = UpdateMessage {
                 step: "0".to_string(),
                 status: "aborted".to_string(),
                 output: "Done Aborting".to_string(),
             };
             let json_str = serde_json::to_string(&msg).unwrap();
+
+            handle_error_success(&state,"aborted".to_string()).await;
             return HttpResponse::Ok().body(json_str);
-        }
     } //if running
     let msg = UpdateMessage {
         step: "0".to_string(),

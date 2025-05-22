@@ -30,7 +30,7 @@ pub async fn connect_and_stream_ws(
 
     let token = &query.token;
 
-    let state = data.as_ref();
+    let state = data.as_ref().clone();
     let current_token_lock = state.token.lock().await;
     if current_token_lock.as_deref() != Some(token.as_str()) {
         return Ok(HttpResponse::Unauthorized().body("Invalid token"));
@@ -50,12 +50,12 @@ pub async fn connect_and_stream_ws(
 
     // Subscribe to broadcast channel
     let mut rx = data.sender.subscribe();
-
+    
     // Stream new output to client
     actix_web::rt::spawn(async move {
         while let Ok(line) = rx.recv().await {
 
-          
+            
             if session.text(line).await.is_err() {
                 break; // disconnected
             }

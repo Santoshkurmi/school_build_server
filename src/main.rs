@@ -23,7 +23,7 @@ mod handle_is_building;
 mod handle_socket;
 mod models;
 mod util;
-
+mod handle_error_success;
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
 
@@ -37,6 +37,7 @@ async fn main() -> std::io::Result<()> {
     let state = SharedState {
         buffer: Arc::new(Mutex::new(Vec::new())),
         sender,
+        package_name: Arc::new(Mutex::new(None)),
         is_building: Arc::new(Mutex::new(false)),
         builder_handle: Arc::new(Mutex::new(None)),
         token: Arc::new(Mutex::new(None)),

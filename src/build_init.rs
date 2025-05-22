@@ -1,7 +1,7 @@
 use crate::{
     auth::is_authorised_client,
     build,
-    models::{self, BuildState},
+    models::{self, BuildInit, BuildState},
     util::generate_token,
 };
 use actix_web::{HttpRequest, HttpResponse, Responder, post, rt::task::JoinHandle, web};
@@ -19,15 +19,37 @@ use std::sync::Arc;
 #[post("/build")]
 pub async fn build_initialize(
     req: HttpRequest,
-    _package_name: String,
+    payload: web::Json<BuildInit>,
     state: web::Data<SharedState>,
 ) -> impl Responder {
 
-
+  
     if !is_authorised_client(&req,state.clone()).await {
         return HttpResponse::Unauthorized().body("Unauthorized");
     }
 
+    let package_name = payload.package_name.clone();
+
+    if package_name.is_empty() {
+        return HttpResponse::BadRequest().body("Empty package name");
+    }
+
+    {
+        let mut package_name_g = state.package_name.lock().await;
+        *package_name_g = Some(package_name);
+
+    }
+   
+
+    /*
+    |--------------------------------------------------------------------------
+    | Clear previous build logs only on next build
+    |--------------------------------------------------------------------------
+    |
+    */
+
+    let mut buf = state.buffer.lock().await;
+    buf.clear();
     let process_state = state.get_ref().clone();
 
     let mut flag = state.is_building.lock().await;
@@ -35,7 +57,7 @@ pub async fn build_initialize(
         let token = state.token.lock().await;
 
         let payload = BuildState {
-            token: Some("/connect?token=".to_string() + &token.clone().unwrap()),
+            token: Some(token.clone().unwrap().to_string()),
             is_running: true,
         };
 

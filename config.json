@@ -4,6 +4,8 @@
     "on_success":"https://erp.com.np/success/update",
     "on_failure":"https://erp.com.np/failure/update",
     "port":8080,
+    "log_path":"logs",
+    "guide":"Above log path is relative to the user home directory, dont use absoulte path for now",
 
     "commands": [
         {

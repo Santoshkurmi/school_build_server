@@ -1,45 +1,75 @@
-use models::{SharedState, UpdateMessage};
-use serde::{Deserialize, Serialize};
+use models::{SharedState};
 
+use crate::handle_error_success::handle_error_success;
 use crate::models;
+use crate::util::{read_output_lines, send_output};
 use std::sync::Arc;
-use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
 
 
-
-/// This starts the updater in the background and broadcasts its output
 pub async fn build(state: Arc<SharedState>) {
 
-    let mut child = Command::new("bash")
-        .arg("-c")
-        .arg("echo Starting update... && sleep 1 && echo Installing... && sleep 1 && echo Done!")
-        .stdout(std::process::Stdio::piped())
-        .spawn()
-        .expect("Failed to start");
+    
+    let commands = state.config.lock().await.commands.clone();
+    let mut step = 1;
 
-    if let Some(stdout) = child.stdout.take() {
-        let reader = BufReader::new(stdout);
-        let mut lines = reader.lines();
+    for cmd in commands {
+        println!("Running command: {}\n", cmd.command);
+        send_output(&state, step, "running", &format!("Running command: {}\n", cmd.command)).await;
+        
+        let  child = Command::new("bash")
+            .arg("-c")
+            .arg(cmd.command)
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped())
+            .spawn();
 
-        let mut step = 1;
-        while let Ok(Some(line)) = lines.next_line().await {
-            // Broadcast line to all connected clients
-            let msg = UpdateMessage {
-                step: step.to_string(),
-                status: "running".to_string(),
-                output: line.clone(),
-            };
-            step += 1;
-            let json_str = serde_json::to_string(&msg).unwrap();
+        let mut child = match child {
+            Ok(c) => c,
+            Err(e) => {
+                handle_error_success(&state, "error".to_string()).await;
 
-            let _ = state.sender.send(json_str.clone());
+                send_output(&state, step, "error", &format!("Failed to spawn: {}", e)).await;
+                break;
+            }
+        };
 
-            // Also store in buffer
-            let mut buf = state.buffer.lock().await;
-            buf.push(msg);
+      
+
+        let stdout = child.stdout.take();
+        let stderr = child.stderr.take();
+
+        // Read both stdout and stderr concurrently
+        tokio::join!(
+            read_output_lines(stdout, step, "running", &state),
+            read_output_lines(stderr, step, "error", &state)
+        );
+
+        let status = child.wait().await;
+        match status {
+            Ok(status) if status.success() => {
+                step += 1;
+            }
+            Ok(_status) => {
+                handle_error_success(&state, "error".to_string()).await;
+
+                // handle_error_success(&state,"error".to_string()).await;
+                break;
         }
-    }
 
-    let _ = child.wait().await;
+            Err(e) => {
+            handle_error_success(&state, "error".to_string()).await;
+            send_output(&state, step, "error", &format!("Failed to wait for command: {}", e)).await;
+                    break;
+               
+            }
+        }
+    }//loop
+
+    handle_error_success(&state, "success".to_string()).await;
+
 }
+
+
+
+
