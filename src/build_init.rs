@@ -22,7 +22,9 @@ pub async fn build_initialize(
     _package_name: String,
     state: web::Data<SharedState>,
 ) -> impl Responder {
-    if !is_authorised_client(&req) {
+
+
+    if !is_authorised_client(&req,state.clone()).await {
         return HttpResponse::Unauthorized().body("Unauthorized");
     }
 

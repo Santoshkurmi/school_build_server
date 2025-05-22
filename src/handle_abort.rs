@@ -11,7 +11,7 @@ use crate::{auth::is_authorised_client, models};
 */
 #[post("/abort")]
 pub async fn abort(req: HttpRequest, state: web::Data<SharedState>) -> impl Responder {
-    if !is_authorised_client(&req) {
+    if !is_authorised_client(&req,state.clone()).await {
         return HttpResponse::Unauthorized().body("Unauthorized");
     }
 

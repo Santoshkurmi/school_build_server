@@ -15,7 +15,7 @@ use crate::{
 */
 #[get("/is_building")]
 pub async fn is_building(req: HttpRequest, state: web::Data<SharedState>) -> impl Responder {
-    if !is_authorised_client(&req) {
+    if !is_authorised_client(&req,state.clone()).await {
         return HttpResponse::Unauthorized().body("Unauthorized");
     }
 

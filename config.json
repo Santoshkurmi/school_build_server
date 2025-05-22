@@ -1,0 +1,20 @@
+{
+    "name":"School Android App Builder",
+    "allowed_ips": ["127.0.0.1", "::1", "192.168.1.100"],
+    "on_success":"https://erp.com.np/success/update",
+    "on_failure":"https://erp.com.np/failure/update",
+    "port":8080,
+
+    "commands": [
+        {
+            "command":"ls",
+            "title":"List All Folder"
+        },
+        {
+            "command":"man",
+            "title":"Man Page"
+        }
+    ]
+
+}
+

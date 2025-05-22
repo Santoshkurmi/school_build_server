@@ -42,9 +42,10 @@ pub async fn connect_and_stream_ws(
     // Send old buffered messages first
     {
         let buf = data.buffer.lock().await;
-        for line in buf.iter() {
-            let _ = session.text(line.clone()).await;
-        }
+        let json_array = serde_json::to_string(&*buf).unwrap();
+        // for line in buf.iter() {
+            let _ = session.text(json_array).await;
+        // }
     }
 
     // Subscribe to broadcast channel

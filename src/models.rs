@@ -45,7 +45,7 @@ pub struct ConnectParams {
 |
 */
 
-type SharedBuffer = Arc<Mutex<Vec<String>>>;
+type SharedBuffer = Arc<Mutex<Vec<UpdateMessage>>>;
 type SharedSender = broadcast::Sender<String>;
 
 #[derive(Clone)]
@@ -55,4 +55,30 @@ pub struct SharedState {
     pub is_building: Arc<Mutex<bool>>,
     pub token: Arc<Mutex<Option<String>>>, // this store random 32 character string to identify the build process from client browser to connect to websocket
     pub builder_handle: Arc<Mutex<Option<JoinHandle<()>>>>, //it store the handle of the build process later to kill it
+    pub config: Arc<Mutex<Config>>,
+}
+
+
+#[derive(Serialize, Deserialize)]
+pub struct MyCommand {
+    command: String,
+    title: String,
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| This is the config payload of the server to make it indepenent for loose coupling
+|--------------------------------------------------------------------------
+|
+*/
+
+#[derive(Serialize,Deserialize)]
+pub struct Config {
+    pub name: String,
+    pub allowed_ips: Vec<String>,
+    pub on_success: String,
+    pub on_failure: String,
+    pub port: u16,
+    pub commands: Vec<MyCommand>,
 }
