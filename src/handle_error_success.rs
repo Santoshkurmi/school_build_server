@@ -1,7 +1,9 @@
 
 
-use std::{ sync::Arc};
+use std::{ sync::Arc, time::Duration};
 
+
+use tokio::time::sleep;
 
 use crate::{models::{ SharedState, SuccessErrorMessage}, util::{save_log, send_to_other_server}};
 
@@ -67,13 +69,19 @@ pub async fn handle_error_success(state: &Arc<SharedState>,status:String) {
 
 
                 tokio::spawn(async move {
-                    send_to_other_server(url, json_str).await;
+
+                    let is_send = send_to_other_server(url.clone(), json_str.clone()).await;
+                    if !is_send {
+                        println!("Retrying to send data to other server");
+                        sleep(Duration::from_secs(10)).await;
+                        send_to_other_server(url.clone(), json_str.clone()).await;
+                    }
+                    else{
                     println!("Done everything");
+                    }
 
                 });
             }
-
-            
 
             /*
             |--------------------------------------------------------------------------

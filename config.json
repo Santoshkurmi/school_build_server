@@ -4,13 +4,18 @@
     "on_success":"https://erp.com.np/success/update",
     "on_failure":"https://erp.com.np/failure/update",
     "port":8080,
-    "log_path":"logs",
-    "guide":"Above log path is relative to the user home directory, dont use absoulte path for now",
+    "log_path":"/home/cat/logs",
+    "certificate_path":"cert.pem",
+    "certificate_key_path":"key.pem",
+
+    "base_path":"/home/cat/school_build_server",
+    "project_path":"school_app",
+
 
     "commands": [
         {
-            "command":"ls",
-            "title":"List All Folder"
+            "command":"cargo run",
+            "title":"Run Cargo Inside"
         },
         {
             "command":"man",

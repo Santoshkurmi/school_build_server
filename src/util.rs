@@ -5,7 +5,6 @@ use rand::{distributions::Alphanumeric, Rng};
 use reqwest::Client;
 use crate::models::{self, UpdateMessage};
 use tokio::io::{AsyncBufReadExt, BufReader};
-use tokio::process::Command;
 use crate::models::SharedState;
 use std::fs::{self, File};
 use std::io::Write;
@@ -55,9 +54,12 @@ pub async fn send_output(state: &Arc<SharedState>, step: usize, status: &str, ou
 pub async  fn save_log(log_path:String,logs:String,token:String){
 
    
-    let home_dir = dirs::home_dir().expect("Home directory not found");
+    // let home_dir = dirs::home_dir().expect("Home directory not found");
 
-    let full_path = format!("{}/{}",home_dir.to_string_lossy(),log_path);
+    // let full_path = format!("{}/{}",home_dir.to_string_lossy(),log_path);
+
+    let full_path = log_path;
+
     // Create logs directory if it doesn't exist
     fs::create_dir_all( &full_path).expect("Failed to create logs directory");
 
@@ -78,7 +80,7 @@ pub async  fn save_log(log_path:String,logs:String,token:String){
 }
 
 
-pub async fn send_to_other_server(path:String,data:String) {
+pub async fn send_to_other_server(path:String,data:String) ->bool{
     let client = Client::new();
     println!("{}",path);
     let res = client
@@ -91,11 +93,19 @@ pub async fn send_to_other_server(path:String,data:String) {
     match res {
         Ok(response) => {
             let status = response.status();
+            if  !status.is_success(){
+                println!("failed to send data to other server: {}", status);
+                return  false;
+            }
             let body = response.text().await.unwrap_or_default();
             println!("Successfully sent data to other server: {}", status);
             println!("Response body: {}", body);
+            return  true;
         }
-        Err(err) =>  println!("failed to send data to other server: {}", err),
+        Err(err) => {
+            println!("failed to send data to other server: {}", err);
+            return  false;
+        } 
     }
 
 

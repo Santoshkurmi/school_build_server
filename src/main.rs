@@ -12,7 +12,9 @@ use futures_util::future::FutureExt;
 use handle_abort::abort;
 use handle_is_building::is_building;
 use handle_socket::connect_and_stream_ws;
+use handle_ssl::load_ssl_certificate;
 use models::{Config, SharedState};
+use std::net::TcpListener;
 use std::sync::Arc;
 use tokio::sync::{Mutex, broadcast};
 mod auth;
@@ -24,6 +26,8 @@ mod handle_socket;
 mod models;
 mod util;
 mod handle_error_success;
+mod handle_ssl;
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
 
@@ -44,6 +48,12 @@ async fn main() -> std::io::Result<()> {
         config: Arc::new(Mutex::new(config)),
     };
 
+    let config = state.config.lock().await.clone();
+    let certificate_path = config.certificate_path;
+    let certificate_key_path = config.certificate_key_path;
+
+    let builder = load_ssl_certificate(certificate_path,certificate_key_path).await;
+
     println!("Server listening on port {}", port);
 
     HttpServer::new(move || {
@@ -54,7 +64,8 @@ async fn main() -> std::io::Result<()> {
             .service(is_building) //to check if the update process is running //is_building
             .service(abort) //to abort the update process  //abort
     })
-    .bind(("0.0.0.0", port))?
+    .bind_openssl( format!( "0.0.0.0:{}",port), builder)?
+    // .bind(("0.0.0.0", port))?
     .run()
     .await
 }

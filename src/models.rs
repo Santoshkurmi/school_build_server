@@ -92,7 +92,7 @@ pub struct MyCommand {
 |
 */
 
-#[derive(Serialize,Deserialize)]
+#[derive(Serialize,Deserialize,Clone)]
 pub struct Config {
     pub name: String,
     pub allowed_ips: Vec<String>,
@@ -101,6 +101,8 @@ pub struct Config {
     pub port: u16,
     pub commands: Vec<MyCommand>,
     pub log_path: String,
+    pub certificate_path: String,
+    pub certificate_key_path: String,
 }
 
 /*
