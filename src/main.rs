@@ -64,8 +64,8 @@ async fn main() -> std::io::Result<()> {
             .service(is_building) //to check if the update process is running //is_building
             .service(abort) //to abort the update process  //abort
     })
-    .bind_openssl( format!( "0.0.0.0:{}",port), builder)?
-    // .bind(("0.0.0.0", port))?
+    // .bind_openssl( format!( "0.0.0.0:{}",port), builder)?
+    .bind(("0.0.0.0", port))?
     .run()
     .await
 }

@@ -1,8 +1,8 @@
 {
     "name":"School Android App Builder",
     "allowed_ips": ["127.0.0.1", "::1", "192.168.1.100"],
-    "on_success":"https://erp.com.np/success/update",
-    "on_failure":"https://erp.com.np/failure/update",
+    "on_success":"http://127.0.0.1:8000/api/update/logs",
+    "on_failure":"http://127.0.0.1:8000/api/update/logs",
     "port":8080,
     "log_path":"/home/cat/logs",
     "certificate_path":"cert.pem",
@@ -14,12 +14,24 @@
 
     "commands": [
         {
-            "command":"cargo run",
-            "title":"Run Cargo Inside"
+            "command":"echo 2 && sleep 5",
+            "title":"Runing dummy logs"
         },
         {
-            "command":"man",
-            "title":"Man Page"
+            "command":"echo 3 && sleep 5",
+            "title":"Runing dummy logs"
+        },
+        {
+            "command":"echo 3 && sleep 5",
+            "title":"Runing dummy logs"
+        },
+        {
+            "command":"echo 4 && sleep 5",
+            "title":"Runing dummy logs"
+        },
+        {
+            "command":"echo 5 && sleep 5",
+            "title":"Runing dummy logs"
         }
     ]
 

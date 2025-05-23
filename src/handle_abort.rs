@@ -15,8 +15,12 @@ pub async fn abort(req: HttpRequest, state: web::Data<SharedState>) -> impl Resp
         return HttpResponse::Unauthorized().body("Unauthorized");
     }
 
-    let   flag = state.is_building.lock().await;
-    if *flag {
+    let mut flag:bool;
+
+    {
+       flag = *state.is_building.lock().await;
+    }
+    if flag {
         
         let msg = UpdateMessage {
                 step: "0".to_string(),

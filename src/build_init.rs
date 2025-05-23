@@ -80,7 +80,7 @@ pub async fn build_initialize(
     *token = Some(new_token.clone());
 
     let payload = BuildState {
-        token: Some("/connect?token=".to_string() + &new_token.clone()),
+        token: Some("".to_string() + &new_token.clone()),
         is_running: true,
     };
 

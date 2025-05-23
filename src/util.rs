@@ -95,6 +95,8 @@ pub async fn send_to_other_server(path:String,data:String) ->bool{
             let status = response.status();
             if  !status.is_success(){
                 println!("failed to send data to other server: {}", status);
+                let body = response.text().await.unwrap_or_default();
+                println!("{}",body);
                 return  false;
             }
             let body = response.text().await.unwrap_or_default();
